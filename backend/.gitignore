@@ -1,0 +1,14 @@
+#Libs
+node_modules/
+
+#Environment Variables
+.env
+
+#AI readme's
+.agents
+.claude
+.windsurf
+
+#Temp
+dist/
+/src/generated/prisma
