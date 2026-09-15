@@ -1,8 +1,9 @@
-import express, {Request, Response} from "express";
+import express, {NextFunction, Request, Response} from "express";
 import {z} from "zod";
 import bcrypt from "bcrypt";
 import prisma from "./lib/prisma.js";
 import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -10,6 +11,7 @@ const saltRounds = parseInt(process.env.SALT_ROUND||"10") || 10;
 const secretKey = process.env.secretKey || "mySuperSecretKey"
 
 app.use(express.json());
+app.use(cookieParser());
 
 const userSignUpSchema = z.object({
     name: z.string().min(3),
@@ -23,6 +25,20 @@ const userLogInSchema = z.object({
 app.get("/health", async(req:Request,res:Response)=>{
     res.json({message: `The server is up and running on port ${PORT}`});
 })
+
+function userMiddleware(req:Request,res:Response,next:NextFunction){
+    const token = req.cookies.token;
+    if(!token){
+        return res.status(401).json({msg:"User not authenticated"})
+    }
+    try{
+        const decoded = jwt.verify(token,secretKey)
+        next();
+    }
+    catch{
+        return res.status(401).json({msg:"Invalid or expired token"})
+    }
+}
 
 app.post("/signup", async(req:Request,res:Response)=>{
     try{
@@ -86,14 +102,21 @@ app.post('/login', async(req:Request,res:Response)=>{
                 const isMatch = await bcrypt.compare(password,resp?.password || "Null")
                 console.log("is match -> ", isMatch)
                 if(!isMatch){
-                    res.status(401).json({
+                    return res.status(401).json({
                         msg: "Password is not valid ! please enter a valid password"
                     })
                 }
                 else{
-                    const token = jwt.sign(username,secretKey)
-
-                    res.status(200).json({
+                    console.log("before jwt sign")
+                    const token = await jwt.sign({userId:username},secretKey, {expiresIn:"7d"})
+                    console.log("after jwt sign")
+                    res.cookie("token", token, {
+                        httpOnly:true,
+                        secure: false,
+                        sameSite: "lax",
+                        maxAge: 7 * 24 * 60 * 60 * 1000
+                    })
+                    return res.status(200).json({
                         msg: "user is logged in",
                         token: token
                     })
@@ -104,13 +127,25 @@ app.post('/login', async(req:Request,res:Response)=>{
         }
         catch(e){
             console.log(e);
-            return res.json({
+            return res.status(500).json({
                 msg:"something went wrong"
             })
         }
     }
 
 })
+
+app.post('/logout', async(req:Request,res:Response)=>{
+    res.clearCookie("token",{
+        httpOnly:true,
+        secure:false,
+        sameSite:"lax"
+    });
+
+    return res.status(200).json({
+        msg: "logout successfull"
+    });
+});
 
 app.listen(PORT, ()=>{
     console.log(`The app is listening on Port ${PORT}`);
