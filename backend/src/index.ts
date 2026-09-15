@@ -2,11 +2,12 @@ import express, {Request, Response} from "express";
 import {z} from "zod";
 import bcrypt from "bcrypt";
 import prisma from "./lib/prisma.js";
+import jwt from "jsonwebtoken";
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const saltRounds = process.env.SALT_ROUND || 10;
-
+const saltRounds = parseInt(process.env.SALT_ROUND||"10") || 10;
+const secretKey = process.env.secretKey || "mySuperSecretKey"
 
 app.use(express.json());
 
@@ -76,7 +77,30 @@ app.post('/login', async(req:Request,res:Response)=>{
                     username: username,
                 }
             })
+            if(!resp){
+                return res.status(401).json({
+                    msg: "Username not found !"
+                })
+            }
+            else{
+                const isMatch = await bcrypt.compare(password,resp?.password || "Null")
+                console.log("is match -> ", isMatch)
+                if(!isMatch){
+                    res.status(401).json({
+                        msg: "Password is not valid ! please enter a valid password"
+                    })
+                }
+                else{
+                    const token = jwt.sign(username,secretKey)
+
+                    res.status(200).json({
+                        msg: "user is logged in",
+                        token: token
+                    })
+                }
+            }
             console.log("resp for login -> ", resp)
+            
         }
         catch(e){
             console.log(e);
@@ -85,7 +109,7 @@ app.post('/login', async(req:Request,res:Response)=>{
             })
         }
     }
-    res.json({msg:"everything is fine"});
+
 })
 
 app.listen(PORT, ()=>{

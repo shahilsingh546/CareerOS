@@ -17,7 +17,7 @@ model User {
   name String
   username String @unique
   password String
-  phoneNumber Int?
+  phoneNumber BigInt?
   about String?
   applications Application[]
   createdAt    DateTime      @default(now())
