@@ -1,8 +1,8 @@
 import express, {NextFunction, Request, Response} from "express";
-import {z} from "zod";
+import {any, string, z} from "zod";
 import bcrypt from "bcrypt";
 import prisma from "./lib/prisma.js";
-import jwt from "jsonwebtoken";
+import jwt, {JwtPayload} from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 const app = express();
 
@@ -22,7 +22,15 @@ const userLogInSchema = z.object({
     username: z.string().min(5),
     password: z.string().min(8)
 })
-app.get("/health", async(req:Request,res:Response)=>{
+
+const applicationSchema = z.object({
+    companyName:z.string().min(2),
+    jobPost:z.string(),
+})
+interface AuthPayload extends JwtPayload {
+    userId:string
+}
+app.get("/health",userMiddleware, async(req:Request,res:Response)=>{
     res.json({message: `The server is up and running on port ${PORT}`});
 })
 
@@ -32,7 +40,8 @@ function userMiddleware(req:Request,res:Response,next:NextFunction){
         return res.status(401).json({msg:"User not authenticated"})
     }
     try{
-        const decoded = jwt.verify(token,secretKey)
+        const decoded = jwt.verify(token,secretKey) as AuthPayload
+        req.userId = decoded.userId;
         next();
     }
     catch{
@@ -146,6 +155,27 @@ app.post('/logout', async(req:Request,res:Response)=>{
         msg: "logout successfull"
     });
 });
+
+app.post('/application',userMiddleware, async(req:Request,res:Response)=>{
+    const checkZodValidationOfApplication = applicationSchema.safeParse(req.body);
+    if(!checkZodValidationOfApplication.success){
+        return res.status(400).json({msg:"Invalid schema"})
+    }
+    const {companyName,jobPost,yoe,skills,packageOffer,notes} = req.body;
+    try{
+        const userId = req.userId
+        console.log("inside application route -> ",userId)
+        const user = await prisma.user.findUnique({
+            where: {
+                username:req.userId
+            }
+        })
+
+    }
+    catch{
+
+    }
+})
 
 app.listen(PORT, ()=>{
     console.log(`The app is listening on Port ${PORT}`);
