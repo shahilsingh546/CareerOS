@@ -4,9 +4,17 @@ import bcrypt from "bcrypt";
 import prisma from "./lib/prisma.js";
 import jwt, {JwtPayload} from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+const corsOptions = {
+    origin: ["http://localhost:3000", "http://172.19.24.74:3000"],
+    methods: ['GET','POST','PUT','PATCH', 'DELETE'],
+    credentials:true
+}
+app.use(cors(corsOptions));
+const PORT = process.env.PORT || 3002;
 const saltRounds = parseInt(process.env.SALT_ROUND||"10") || 10;
 const secretKey = process.env.secretKey;
 
@@ -17,7 +25,7 @@ const userSignUpSchema = z.object({
     name: z.string().min(3),
     username: z.string().min(5),
     password: z.string().min(8),   
-    phoneNumber: z.int().optional(),
+    phoneNumber: z.string().optional(),
     about: z.string().optional()
 })
 const userLogInSchema = z.object({
@@ -28,10 +36,21 @@ const userLogInSchema = z.object({
 const applicationSchema = z.object({
     companyName:z.string().min(2),
     jobPost:z.string(),
-    yoe: z.int().optional(),
+    yoe: z.string().optional(),
     skills: z.string().optional(),
     packageOffer: z.string().optional(),
     notes: z.string().optional()
+})
+
+const editApplicationSchema = z.object({
+    companyName:z.string().min(2).optional(),
+    jobPost:z.string().optional(),
+    yoe: z.string().optional(),
+    skills: z.string().optional(),
+    packageOffer: z.string().optional(),
+    notes: z.string().optional(),
+    applyDate: z.date().optional(),
+    currentStatus: z.enum(["OA", "APPLIED", "INTERVIEW", "HR", "OFFER", "REJECTED", "WITHDRAWN"]).optional()
 })
 
 const currentStatusSchema = z.enum(["OA", "APPLIED", "INTERVIEW", "HR", "OFFER", "REJECTED", "WITHDRAWN"])
@@ -46,6 +65,7 @@ app.get("/health", async(req:Request,res:Response)=>{
 
 function userMiddleware(req:Request,res:Response,next:NextFunction){
     const token = req.cookies.token;
+    console.log("token -> ", token);
     if(!token){
         return res.status(401).json({msg:"User not authenticated"})
     }
@@ -62,6 +82,32 @@ function userMiddleware(req:Request,res:Response,next:NextFunction){
     }
 }
 
+app.get('/auth/me', userMiddleware,async(req:Request,res:Response)=>{
+    console.log("inside /auth/me route -> ")
+    try{
+        const userId = req.userId;
+        console.log("userId-> ", userId)
+        console.log("type of userID", typeof(userId))
+        if(!userId){
+            return res.status(401).json({msg: "user is not authorised"})
+        }
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        })
+        console.log("user detail -> ", user)
+        if(!user){
+            return res.status(404).json({msg: "user not exist"})
+        }
+        console.log("before returning -> resppnse")
+        return res.json({user})
+    }
+    catch(err){
+        console.log("error -> ",err)
+        return res.status(500).json({msg: "internal server error"})
+    }
+})
 app.post("/signup", async(req:Request,res:Response)=>{
     try{
         const result=userSignUpSchema.safeParse(req.body);
@@ -197,7 +243,8 @@ app.post('/application',userMiddleware, async(req:Request,res:Response)=>{
         })
         console.log(respApplication);
         return res.json({
-            msg:"application created successfully"
+            msg:"application created successfully",
+            Application: respApplication
         })
 
     }
@@ -217,9 +264,9 @@ app.get('/application', userMiddleware, async(req:Request,res:Response)=>{
                 userId: userId
             }
         })
-        console.log(resp)
+        // console.log(resp)
         return res.json({
-            response: resp
+            applications: resp
         })
     }
     catch{
@@ -268,13 +315,18 @@ app.patch("/application/:id", userMiddleware, async(req:Request,res:Response)=>{
     if(Number.isNaN(applicationId)){
         return res.status(400).json({msg:"please enter a valid id"})
     }
-    const status = currentStatusSchema.safeParse(req.body.currentStatus)
-    console.log("status schema -> ", status)
-    if(!status.success){
-        return res.status(400).json({msg:"please give correct value of currentStatus"})
+    const editedApplication = editApplicationSchema.safeParse(req.body)
+    console.log("status schema -> ", editedApplication)
+    if(!editedApplication.success){
+        return res.status(400).json({msg:"please give correct value"})
     }
-    console.log(status.data)
-    const currentStatus = status.data;
+    console.log(editedApplication.data)
+
+    // # for removing undefined keys in currentApplication
+    const currentApplication = Object.fromEntries(
+        Object.entries(editedApplication.data).filter(([_,value])=> value !== undefined)
+    );
+
     try{
 
         const application = await prisma.application.findFirst({
@@ -292,9 +344,7 @@ app.patch("/application/:id", userMiddleware, async(req:Request,res:Response)=>{
             where: {
                 id:application.id,
             },
-            data: {
-                currentStatus: currentStatus
-            }
+            data: currentApplication
         });
         if(!applicationUpdate){
             return res.status(400).json({msg: "invalid request"})

@@ -17,7 +17,7 @@ model User {
   name String
   username String @unique
   password String
-  phoneNumber BigInt?
+  phoneNumber String?
   about String?
   applications Application[]
   createdAt    DateTime      @default(now())
@@ -30,7 +30,7 @@ model Application{
   user         User     @relation(fields: [userId], references: [id])
   companyName String
   jobPost String
-  yoe Int?
+  yoe String?
   skills String?
   packageOffer String?
   applyDate DateTime @default(now())
