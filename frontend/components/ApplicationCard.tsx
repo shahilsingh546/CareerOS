@@ -81,12 +81,9 @@ export default function ApplicationCard({ id, companyName, jobPost, yoe, skills,
     SetFormData((prev) => ({ ...prev, [name]: value }))
   }
   const handleSave = async (e: any) => {
-    console.log("inside handle save")
     e.preventDefault();
     const changedData: any = {}
     for (const [key, value] of Object.entries(formData)) {
-      console.log("inside for")
-      console.log("key ->> ", key)
       if (value !== originalData[key as keyof typeof formData]) {
         changedData[key] = value
       }
@@ -101,10 +98,9 @@ export default function ApplicationCard({ id, companyName, jobPost, yoe, skills,
         body: JSON.stringify(changedData)
       })
       const data = await res.json();
-      console.log("data -> ", data)
     }
     catch (e) {
-      console.log("erroor-> ", e)
+      console.error("error-> ", e)
     }
     setIsEditing(false)
   }

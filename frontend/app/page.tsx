@@ -3,6 +3,7 @@ import User from "@/components/User";
 import {headers} from "next/headers";
 import StatusTab from "@/components/StatusTab";
 import StatsCard from "@/components/StatsCard";
+import { ApplicationsProvider } from "@/components/ApplicationsContext";
 
 export default async function Home() {
   const headerList = await headers();
@@ -12,10 +13,12 @@ export default async function Home() {
   }
   return (
     <div>
+      <ApplicationsProvider>
         <User/>
         <StatsCard/>
         <StatusTab/>
-      <ApplicationList />
+        <ApplicationList />
+      </ApplicationsProvider>
     </div>
   );
 }

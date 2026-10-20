@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Buttons from "./button";
 import ApplicationForm from "./ApplicationForm";
+import { useApplication } from "./ApplicationsContext";
 
-export default function User() {
+export default function User({}) {
+    const {addApplication} = useApplication();
     const [user, setUser] = useState("")
     const [showApplicationForm, setshowApplicationForm] = useState(false)
 
@@ -15,6 +17,7 @@ export default function User() {
     function closeApplicationForm() {
         setshowApplicationForm(false)
     }
+
 
     async function createApplication(formData: any) {
         console.log("formData-> ", formData)
@@ -34,10 +37,7 @@ export default function User() {
             const newApplication = data.Application;
             console.log("Application response -> ", data)
             console.log("applcations->  ", data.Application)
-            setApplications(prevApplication => [
-                ...prevApplication,
-                newApplication
-            ])
+            addApplication(newApplication);
         }
         catch (e) {
             alert("form not submitted, something wrong")

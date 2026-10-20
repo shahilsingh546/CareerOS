@@ -1,12 +1,58 @@
-export default function StatusTab(){
+"use client"
+import { useApplication } from "./ApplicationsContext"
+
+export default function StatusTab() {
+
+    const { applications, selectedStatus, setselectedStatus } = useApplication();
+
+    const jobStatusMapping = [
+        { label: 'All', value: 'ALL' },
+        { label: 'Applied', value: 'APPLIED' },
+        { label: 'OA', value: 'OA' },
+        { label: 'Interview', value: 'INTERVIEW' },
+        { label: 'HR', value: 'HR' },
+        { label: 'Offer', value: 'OFFER' },
+        { label: 'Rejected', value: 'REJECTED' },
+        { label: 'Withdrawn', value: 'WITHDRAWN' }
+    ]
+
+    // const jobStatus = ['APPLIED', 'OA', 'INTERVIEW', 'HR', 'OFFER', 'REJECTED', 'WITHDRAWN']
+    const statusSummary = applications.reduce<Record<string, number>>((summary, job) => {
+        const status = job.currentStatus
+        summary[status] = (summary[status] || 0) + 1;
+        return summary
+    }, {})
+
+    console.log("statusSummary -> ", statusSummary)
+
     return (
         <div>
             <div className="flex flex-wrap gap-2 mb-[18px] px-4">
-                <button className="px-[15px] py-[7px] rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] font-medium aria-pressed:bg-[var(--brand)] aria-pressed:border-[var(--brand)] aria-pressed:text-white cursor-pointer" data-s="All" aria-pressed="false">All (6)</button>
-                <button className="px-[15px] py-[7px] rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] font-medium aria-pressed:bg-[var(--brand)] aria-pressed:border-[var(--brand)] aria-pressed:text-white cursor-pointer" data-s="Applied" aria-pressed="false">Applied (3)</button>
-                <button className="px-[15px] py-[7px] rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] font-medium aria-pressed:bg-[var(--brand)] aria-pressed:border-[var(--brand)] aria-pressed:text-white cursor-pointer" data-s="Interview" aria-pressed="false">Interview (1)</button>
-                <button className="px-[15px] py-[7px] rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] font-medium aria-pressed:bg-[var(--brand)] aria-pressed:border-[var(--brand)] aria-pressed:text-white cursor-pointer" data-s="Offer" aria-pressed="false">Offer (1)</button>
-                <button className="px-[15px] py-[7px] rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] font-medium aria-pressed:bg-[var(--brand)] aria-pressed:border-[var(--brand)] aria-pressed:text-white cursor-pointer" data-s="Rejected" aria-pressed="false">Rejected (1)</button>
+                {jobStatusMapping.map((status) => {
+
+                    const isActive = selectedStatus === status.value;
+
+                    const count = status.value === 'ALL' ? applications.length : statusSummary[status.value] ?? 0;
+
+                    if (status.value !== 'ALL' && count === 0) {
+                        return null
+                    }
+                    return (
+                        <button
+                            key={status.label}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => setselectedStatus(status.value)}
+                            className={`px-[15px] py-[7px] rounded-full border font-medium cursor-pointer ${
+                                isActive
+                                    ? "bg-indigo-600 border-indigo-600 text-white"
+                                    : "border-[var(--line)] bg-white text-[#5B6078]"
+                            }`}
+                        >
+                            {status.label} ({status.value === "ALL" ? applications.length : statusSummary[status.value] ?? 0})
+                        </button>
+                    );
+                })}
             </div>
         </div>
     )
