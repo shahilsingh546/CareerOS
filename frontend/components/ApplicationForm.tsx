@@ -110,12 +110,6 @@ export default function ApplicationForm({ onCancel, onSubmit }: any) {
                                 <input type="text" id="notes" name="notes" placeholder="Currently Applied" value={formData.notes} onChange={handleChange}
                                     className="px-1 py-2.5 text-sm text-slate-900 bg-white w-full border-b-2 border-slate-300 focus:border-blue-600 outline-none" />
                             </div>
-
-                            {/* <button type="submit"
-                        className="!mt-2 py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Submit</button>
-
-                    <button onClick={onCancel}
-                        className="ml-5 !mt-2 py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Cancel</button>      */}
                         </div>
 
                     </div>

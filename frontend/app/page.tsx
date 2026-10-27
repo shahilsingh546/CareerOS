@@ -4,6 +4,7 @@ import {headers} from "next/headers";
 import StatusTab from "@/components/StatusTab";
 import StatsCard from "@/components/StatsCard";
 import { ApplicationsProvider } from "@/components/ApplicationsContext";
+import Navbar from "@/components/navabar";
 
 export default async function Home() {
   const headerList = await headers();
@@ -13,6 +14,7 @@ export default async function Home() {
   }
   return (
     <div>
+      <Navbar/>
       <ApplicationsProvider>
         <User/>
         <StatsCard/>
