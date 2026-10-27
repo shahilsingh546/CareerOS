@@ -75,17 +75,44 @@ export default function User({}) {
         getUserData()
     }, [])
 
-    if (showApplicationForm) {
-        return <ApplicationForm onCancel={closeApplicationForm} onSubmit={createApplication} />
-    }
+    // if (showApplicationForm) {
+    //     return <ApplicationForm onCancel={closeApplicationForm} onSubmit={createApplication} />
+    // }
 
+    // return (
+    //     <div className="flex justify-between items-end gap-4 px-4 flex-wrap">
+    //         <div>
+    //             <h1 className="text-[clamp(28px,3.6vw,40px)]">Hi {user}, here's where your search stands</h1>
+    //             <p className="mt-2 text-[color:var(--muted)]">Keep track of every job you've applied to in one place.</p>
+    //         </div>
+    //         <Buttons buttonName="Add application" onClick={openApplicationForm} />
+    //     </div>
+    // )
     return (
+    <>
         <div className="flex justify-between items-end gap-4 px-4 flex-wrap">
             <div>
-                <h1 className="text-[clamp(28px,3.6vw,40px)]">Hi {user}, here's where your search stands</h1>
-                <p className="mt-2 text-[color:var(--muted)]">Keep track of every job you've applied to in one place.</p>
+                <h1 className="text-[clamp(28px,3.6vw,40px)]">
+                    Hi {user}, here's where your search stands
+                </h1>
+
+                <p className="mt-2 text-[color:var(--muted)]">
+                    Keep track of every job you've applied to in one place.
+                </p>
             </div>
-            <Buttons buttonName="Add application" onClick={openApplicationForm} />
+
+            <Buttons
+                buttonName="Add application"
+                onClick={openApplicationForm}
+            />
         </div>
-    )
+
+        {showApplicationForm && (
+            <ApplicationForm
+                onCancel={closeApplicationForm}
+                onSubmit={createApplication}
+            />
+        )}
+    </>
+);
 }
